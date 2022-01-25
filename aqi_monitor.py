@@ -16,12 +16,6 @@ from Adafruit_IO import *
 # https://pypi.org/project/python-aqi/
 import aqi
 
-# Adafruit.io feeds for the PM2.5, PM10 and AQI metrics
-# https://adafruit-io-python-client.readthedocs.io/en/latest/feeds.html
-PM25_FEED_KEY = 'plh-aqi-pm-2-dot-5'
-PM10_FEED_KEY = 'plh-aqi-pm-10'
-AQI_FEED_KEY = 'plh-aqi-aqi'
-
 def usage():
     scriptName = os.path.basename(__file__)
     print(
@@ -45,9 +39,9 @@ def sensor_loop(daemonMode = False):
         print("Initializing Adafruit.io connection")
     import adafruit_io_creds
     aio = Client(adafruit_io_creds.ADAFRUIT_IO_USERNAME, adafruit_io_creds.ADAFRUIT_IO_KEY)
-    pm25_feed = aio.feeds(PM25_FEED_KEY)
-    pm10_feed = aio.feeds(PM10_FEED_KEY)
-    aqi_feed = aio.feeds(AQI_FEED_KEY)
+    pm25_feed = aio.feeds(adafruit_io_creds.PM25_FEED_KEY)
+    pm10_feed = aio.feeds(adafruit_io_creds.PM10_FEED_KEY)
+    aqi_feed = aio.feeds(adafruit_io_creds.AQI_FEED_KEY)
 
     sensor = SDS011("/dev/ttyUSB0", use_query_mode=True)
 
