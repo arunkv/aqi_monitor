@@ -1,0 +1,5 @@
+# Instructions:
+#  Copy this file as adafruit_io_cred.py and set your credentials
+
+ADAFRUIT_IO_USERNAME = ""
+ADAFRUIT_IO_KEY = ""
