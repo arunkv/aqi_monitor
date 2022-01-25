@@ -9,6 +9,10 @@ AQI monitor on a Raspberry Pi using the SDS011 PM sensor and Adafruit IO
 
 ## Usage
 
+Follow instructions in `adafruit_io_creds.pysample` to configure Adafruit
+
+Then run with:
+
 `aqi_monitor.py [-d]`
 `-d, --daemon  Daemon mode; defaults to interactive mode`
 

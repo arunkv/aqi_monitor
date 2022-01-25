@@ -61,7 +61,14 @@ def sensor_loop(daemonMode = False):
                 syslog.syslog(syslog.LOG_INFO, "Querying SDS011 sensor")
             else:
                 print("Querying SDS011 sensor")
-            pm25, pm10 = sensor.query()
+            try:
+                pm25, pm10 = sensor.query()
+            except:
+                exc_type, value, exc_traceback = sys.exc_info()
+                if daemonMode:
+                    syslog.syslog(syslog.LOG_ERROR, exc_type)
+                    syslog.syslog(syslog.LOG_ERROR, value)
+                    syslog.syslog(syslog.LOG_ERROR, exc_traceback)
             myaqi = aqi.to_aqi([
                     (aqi.POLLUTANT_PM25, pm25),
                     (aqi.POLLUTANT_PM10, pm10)
@@ -100,7 +107,8 @@ def sensor_loop(daemonMode = False):
 
             time.sleep(45)
     except KeyboardInterrupt:
-        sensor.sleep()
+        if sensor is not None:
+            sensor.sleep()
 
 
 def main() -> int:
