@@ -1,1 +1,10 @@
-/home/pi/.config/systemd/user/aqi_monitor.service
+[Unit]
+Description = AQI Monitor
+After = network.target
+
+[Service]
+ExecStart = /home/pi/aqi_monitor/aqi_monitor.py -d
+
+[Install]
+WantedBy = multi-user.target
+
