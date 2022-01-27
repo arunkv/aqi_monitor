@@ -4,6 +4,7 @@ After = network.target
 
 [Service]
 ExecStart = /home/pi/aqi_monitor/aqi_monitor.py -d
+Restart=on-failure
 
 [Install]
 WantedBy = multi-user.target
