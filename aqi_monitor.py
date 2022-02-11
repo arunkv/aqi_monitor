@@ -6,6 +6,7 @@
 # - Runs as daemon or in interactive mode
 
 import daemon, getopt, os, sys, syslog, time
+sys.path.insert(0, 'py-sds011')
 
 # https://github.com/ikalchev/py-sds011
 from sds011 import SDS011
