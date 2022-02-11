@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 adafruit_io_creds.py
-
+py-sds011
