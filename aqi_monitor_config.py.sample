@@ -1,0 +1,19 @@
+# Instructions:
+# 1. Copy this file as config.py 
+
+# 2. Set your Adafruit.io credentials
+
+ADAFRUIT_IO_USERNAME = ""
+ADAFRUIT_IO_KEY = ""
+
+# 3. Set the Feed keys for your feeds for PM2.5, PM10 and AQI 
+PM25_FEED_KEY = ""
+PM10_FEED_KEY = ""
+AQI_FEED_KEY = ""
+
+# 4. Set your Twilio credentials
+TWILIO_SID = ""
+TWILIO_SECRET = ""
+
+# 5. Set your phone number for SMS notification 
+SMS_NUMBER = ""

@@ -128,5 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-adafruit_io_creds.py
+aqi_monitor_config.py
 py-sds011

@@ -3,10 +3,11 @@
 # AQI Monitor
 # - Read PM2.5 and PM10 metrics from an SDS011 PM sensor via USB
 # - Computes AQI and uploads metrics to Adafruit.IO
+# - Optionallys ends SMS via Twilio when AQI is unhealthy
 # - Runs as daemon or in interactive mode
 
 import daemon, getopt, os, sys, syslog, time
-sys.path.insert(0, 'py-sds011')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))+'/py-sds011')
 
 # https://github.com/ikalchev/py-sds011
 from sds011 import SDS011
@@ -17,12 +18,15 @@ from Adafruit_IO import *
 # https://pypi.org/project/python-aqi/
 import aqi
 
+import twilio.rest
+
 def usage():
     scriptName = os.path.basename(__file__)
     print(
         '''Usage: {} [options]
  -d, --daemon  Daemon mode; defaults to interactive mode
  -h, --help    Show this help
+ -n, --notify  Notify via SMS
  -V, --version Show version number and quit'''.format(scriptName)
     )
 
@@ -33,18 +37,28 @@ def version():
     print("{} version {}".format(scriptName, versionNumber))
 
 
-def sensor_loop(daemonMode = False):
+def sensor_loop(daemonMode = False, notifyMode = False):
     if daemonMode:
         syslog.syslog(syslog.LOG_INFO, "Initializing Adafruit.io connection")
     else:
         print("Initializing Adafruit.io connection")
-    import adafruit_io_creds
-    aio = Client(adafruit_io_creds.ADAFRUIT_IO_USERNAME, adafruit_io_creds.ADAFRUIT_IO_KEY)
-    pm25_feed = aio.feeds(adafruit_io_creds.PM25_FEED_KEY)
-    pm10_feed = aio.feeds(adafruit_io_creds.PM10_FEED_KEY)
-    aqi_feed = aio.feeds(adafruit_io_creds.AQI_FEED_KEY)
+    import aqi_monitor_config
+    aio = Client(aqi_monitor_config.ADAFRUIT_IO_USERNAME, aqi_monitor_config.ADAFRUIT_IO_KEY)
+    pm25_feed = aio.feeds(aqi_monitor_config.PM25_FEED_KEY)
+    pm10_feed = aio.feeds(aqi_monitor_config.PM10_FEED_KEY)
+    aqi_feed = aio.feeds(aqi_monitor_config.AQI_FEED_KEY)
+
+    twilioClient = None
+    if notifyMode:
+        if daemonMode:
+            syslog.syslog(syslog.LOG_INFO, "Initializing Twilio")
+        else:
+            print("Initializing Twilio")
+        twilioClient = twilio.rest.Client(aqi_monitor_config.TWILIO_SID, aqi_monitor_config.TWILIO_SECRET)
+
 
     sensor = SDS011("/dev/ttyUSB0", use_query_mode=True)
+    lastaqi = None
 
     try:
        # Read from sensor every 60 seconds
@@ -70,6 +84,8 @@ def sensor_loop(daemonMode = False):
                     syslog.syslog(syslog.LOG_ERROR, exc_type)
                     syslog.syslog(syslog.LOG_ERROR, value)
                     syslog.syslog(syslog.LOG_ERROR, exc_traceback)
+                else:
+                    print(exc_type, value, exc_traceback)
             myaqi = aqi.to_aqi([
                     (aqi.POLLUTANT_PM25, pm25),
                     (aqi.POLLUTANT_PM10, pm10)
@@ -78,6 +94,17 @@ def sensor_loop(daemonMode = False):
                 syslog.syslog(syslog.LOG_INFO, "PM2.5: {}, PM10: {}, AQI: {}".format(pm25, pm10, myaqi))
             else:
                 print("PM2.5: {}, PM10: {}, AQI: {}".format(pm25, pm10, myaqi))
+
+
+            # Notify if AQI is unhealthy
+            if notifyMode and myaqi >= 100 and (lastaqi is None or lastaqi < 100) and twilioClient is not None:
+                smsNumber = aqi_monitor_config.SMS_NUMBER
+                twilioClient.messages.create(body="AQI is unhealthy - last reading "+myaqi,
+                                             to=smsNumber)
+                if daemonMode:
+                    syslog.syslog(syslog.LOG_INFO, "Notified via Twilio")
+                else:
+                    print("Notified via Twilio")
 
             # Turn off the sensor
             if daemonMode:
@@ -106,6 +133,7 @@ def sensor_loop(daemonMode = False):
                     print("Failed to send data to Adafruit.IO")
 
 
+            lastaqi = myaqi
             time.sleep(45)
     except KeyboardInterrupt:
         if sensor is not None:
@@ -114,7 +142,7 @@ def sensor_loop(daemonMode = False):
 
 def main() -> int:
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "dhV", ["daemon", "help", "version"])
+        opts, args = getopt.getopt(sys.argv[1:], "dhnV", ["daemon", "help", "notify", "version"])
     except getopt.GetoptError as err:
         print(err)
         syslog.syslog(syslog.LOG_ERR, err)
@@ -122,6 +150,7 @@ def main() -> int:
         return 2
 
     daemonMode = False
+    notifyMode = False
 
     for o, a in opts:
         if o in ("-d", "--daemon"):
@@ -129,6 +158,8 @@ def main() -> int:
         elif o in ("-h", "--help"):
             usage()
             return 0
+        elif o in ("-n", "--notify"):
+            notifyMode = True
         elif o in ("-V", "--version"):
             version()
             return 0
@@ -138,10 +169,10 @@ def main() -> int:
     if daemonMode:
         syslog.syslog(syslog.LOG_INFO, "Starting AQI monitor in daemon mode")
         with daemon.DaemonContext():
-            sensor_loop(daemonMode)
+            sensor_loop(daemonMode, notifyMode)
     else:
         print("Starting AQI monitor in interactive mode")
-        sensor_loop()
+        sensor_loop(daemonMode, notifyMode)
 
     return 0
 

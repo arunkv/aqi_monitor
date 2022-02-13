@@ -1,5 +1,5 @@
 # aqi_monitor
-AQI monitor on a Raspberry Pi using the SDS011 PM sensor and Adafruit IO
+AQI monitor on a Raspberry Pi using the SDS011 PM sensor and Adafruit IO for reporting
 
 ## Dependencies
 - Python3
@@ -8,7 +8,7 @@ AQI monitor on a Raspberry Pi using the SDS011 PM sensor and Adafruit IO
 
 ## Usage
 
-Follow instructions in `adafruit_io_creds.pysample` to configure Adafruit
+Follow instructions in `aqi_monitor_config.py.sample` to configure 
 
 Then run with:
 
