@@ -26,8 +26,7 @@ def usage():
         '''Usage: {} [options]
  -d, --daemon  Daemon mode; defaults to interactive mode
  -h, --help    Show this help
- -n, --notify  Notify via SMS
- -V, --version Show version number and quit'''.format(scriptName)
+ -n, --notify  Notify via SMS'''.format(scriptName)
     )
 
 
@@ -142,10 +141,10 @@ def sensor_loop(daemonMode = False, notifyMode = False):
 
 def main() -> int:
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "dhnV", ["daemon", "help", "notify", "version"])
+        opts, args = getopt.getopt(sys.argv[1:], "dhn", ["daemon", "help", "notify"])
     except getopt.GetoptError as err:
         print(err)
-        syslog.syslog(syslog.LOG_ERR, err)
+        syslog.syslog(syslog.LOG_ERR, str(err))
         usage()
         return 2
 
@@ -160,9 +159,6 @@ def main() -> int:
             return 0
         elif o in ("-n", "--notify"):
             notifyMode = True
-        elif o in ("-V", "--version"):
-            version()
-            return 0
         else:
             assert False, "unhandled option"
 
