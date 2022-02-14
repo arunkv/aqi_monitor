@@ -97,9 +97,10 @@ def sensor_loop(daemonMode = False, notifyMode = False):
 
             # Notify if AQI is unhealthy
             if notifyMode and myaqi >= 100 and (lastaqi is None or lastaqi < 100) and twilioClient is not None:
-                smsNumber = aqi_monitor_config.SMS_NUMBER
+                fromNumber = aqi_monitor_config.FROM_NUMBER
+                toNumber = aqi_monitor_config.TO_NUMBER
                 twilioClient.messages.create(body="AQI is unhealthy - last reading " + str(myaqi),
-                                             to=smsNumber)
+                                             to=toNumber, from_=fromNumber)
                 if daemonMode:
                     syslog.syslog(syslog.LOG_INFO, "Notified via Twilio")
                 else:

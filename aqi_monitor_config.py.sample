@@ -16,4 +16,5 @@ TWILIO_SID = ""
 TWILIO_SECRET = ""
 
 # 5. Set your phone number for SMS notification 
-SMS_NUMBER = ""
+FROM_NUMBER = ""
+TO_NUMBER = ""
