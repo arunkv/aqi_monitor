@@ -48,6 +48,22 @@ def report_info(message, daemon_mode = False):
         print(message)
 
 
+def twilio_notify(twilio_config, myaqi, daemon_mode):
+    """ Notify via Twilio"""
+    twilio_client = None
+    report_info("Initializing Twilio", daemon_mode)
+    twilio_client = twilio.rest.Client(twilio_config.TWILIO_SID,
+                                       twilio_config.TWILIO_SECRET)
+    if twilio_client is not None:
+        from_number = twilio_config.FROM_NUMBER
+        to_number = twilio_config.TO_NUMBER
+        sms = "AQI is unhealthy - last reading " + str(myaqi)
+        twilio_client.messages.create(body=sms,
+                                      to=to_number,
+                                      from_=from_number)
+        report_info("Notified via Twilio", daemon_mode)
+
+
 def sensor_loop(daemon_mode = False, notify_mode = False):
     """ Main sensor loop that runs forever """
     report_info("Initializing Adafruit.io connection", daemon_mode)
@@ -56,13 +72,6 @@ def sensor_loop(daemon_mode = False, notify_mode = False):
     pm25_feed = aio.feeds(aqi_monitor_config.PM25_FEED_KEY)
     pm10_feed = aio.feeds(aqi_monitor_config.PM10_FEED_KEY)
     aqi_feed = aio.feeds(aqi_monitor_config.AQI_FEED_KEY)
-
-    twilio_client = None
-    if notify_mode:
-        report_info("Initializing Twilio", daemon_mode)
-        twilio_client = twilio.rest.Client(aqi_monitor_config.TWILIO_SID,
-                                           aqi_monitor_config.TWILIO_SECRET)
-
 
     sensor = SDS011("/dev/ttyUSB0", use_query_mode=True)
     lastaqi = None
@@ -94,20 +103,13 @@ def sensor_loop(daemon_mode = False, notify_mode = False):
             report_info("PM2.5: {}, PM10: {}, AQI: {}".format(pm25, pm10, myaqi), daemon_mode)
 
 
-            # Notify if AQI is unhealthy
-            if notify_mode and twilio_client is not None:
-                if myaqi >= 100 and (lastaqi is None or lastaqi < 100):
-                    from_number = aqi_monitor_config.FROM_NUMBER
-                    to_number = aqi_monitor_config.TO_NUMBER
-                    sms = "AQI is unhealthy - last reading " + str(myaqi)
-                    twilio_client.messages.create(body=sms,
-                                                 to=to_number,
-                                                 from_=from_number)
-                    report_info("Notified via Twilio", daemon_mode)
-
             # Turn off the sensor
             report_info("Turning off SDS011 sensor", daemon_mode)
             sensor.sleep()
+
+            # Notify if AQI is unhealthy
+            if notify_mode and myaqi >= 100 and (lastaqi is None or lastaqi < 100):
+                twilio_notify(aqi_monitor_config, myaqi, daemon_mode)
 
             # Send data to Adafruit.io
             try:
@@ -121,7 +123,6 @@ def sensor_loop(daemon_mode = False, notify_mode = False):
                     syslog.syslog(syslog.LOG_ERR, "Failed to send data to Adafruit.IO")
                 else:
                     print("Failed to send data to Adafruit.IO")
-
 
             lastaqi = myaqi
             time.sleep(45)
