@@ -24,7 +24,6 @@ from Adafruit_IO import AdafruitIOError, Client
 import aqi
 
 # https://github.com/ikalchev/py-sds011
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))+'/py-sds011')
 from sds011 import SDS011
 
 import aqi_monitor_config
